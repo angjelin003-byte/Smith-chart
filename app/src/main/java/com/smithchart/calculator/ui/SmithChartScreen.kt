@@ -381,8 +381,8 @@ fun SmithChartScreen(
                     colors = CardDefaults.cardColors(containerColor = bgCard),
                     modifier = Modifier
                         .fillMaxWidth()
-                        .border(1.dp, borderCol, RoundedCornerShape(16.dp)),
-                    shape = RoundedCornerShape(16.dp)
+                        .border(1.dp, borderCol, RoundedCornerShape(8.dp)),
+                    shape = RoundedCornerShape(8.dp)
                 ) {
                     Column(
                         modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
@@ -401,7 +401,7 @@ fun SmithChartScreen(
                             )
                             Surface(
                                 color = if (vswr <= 1.5) Color(0xFF10B981).copy(alpha = 0.2f) else if (vswr <= 2.0) Color(0xFFF59E0B).copy(alpha = 0.2f) else Color(0xFFEF4444).copy(alpha = 0.2f),
-                                shape = RoundedCornerShape(12.dp)
+                                shape = RoundedCornerShape(6.dp)
                             ) {
                                 Text(
                                     text = if (vswr <= 1.2) "Perfect Match" else if (vswr <= 1.5) "Good Match" else if (vswr <= 2.0) "Acceptable" else "Mismatched",
@@ -455,31 +455,45 @@ fun SmithChartScreen(
 
                             // Background Circle
                             drawCircle(color = chartBg, radius = radius, center = Offset(cx, cy))
-                            drawCircle(color = chartGrid, radius = radius, center = Offset(cx, cy), style = Stroke(width = 3f))
+                            drawCircle(color = chartGrid, radius = radius, center = Offset(cx, cy), style = Stroke(width = 2.5f))
 
-                            // Constant Resistance Circles (r = 0.2, 0.5, 1.0, 2.0, 5.0)
-                            val rList = listOf(0.2, 0.5, 1.0, 2.0, 5.0)
+                            // Dense Resistance Circles (r = 0.1, 0.2, 0.33, 0.5, 0.7, 1.0, 1.5, 2.0, 3.0, 4.0, 5.0, 10.0)
+                            val rMajor = setOf(0.2, 0.5, 1.0, 2.0, 5.0)
+                            val rList = listOf(0.1, 0.2, 0.33, 0.5, 0.7, 1.0, 1.5, 2.0, 3.0, 4.0, 5.0, 10.0)
                             rList.forEach { r ->
                                 val circleR = radius / (1.0 + r).toFloat()
                                 val circleCx = cx + radius * (r / (1.0 + r)).toFloat()
+                                val isNormUnity = r == 1.0
+                                val isMajor = r in rMajor
                                 drawCircle(
-                                    color = if (r == 1.0) primaryCyan.copy(alpha = 0.5f) else chartGrid.copy(alpha = 0.7f),
+                                    color = when {
+                                        isNormUnity -> primaryCyan.copy(alpha = 0.6f)
+                                        isMajor -> chartGrid.copy(alpha = 0.75f)
+                                        else -> chartGrid.copy(alpha = 0.35f)
+                                    },
                                     radius = circleR,
                                     center = Offset(circleCx, cy),
-                                    style = Stroke(width = if (r == 1.0) 2f else 1.2f)
+                                    style = Stroke(
+                                        width = if (isNormUnity) 1.8f else if (isMajor) 1.2f else 0.8f
+                                    )
                                 )
                             }
 
-                            // Constant Reactance Arcs (x = +/- 0.5, 1.0, 2.0)
-                            val xList = listOf(0.5, 1.0, 2.0, -0.5, -1.0, -2.0)
+                            // Dense Reactance Arcs (x = +/- 0.2, 0.4, 0.6, 1.0, 1.5, 2.0, 3.0, 5.0)
+                            val xMajor = setOf(0.5, 1.0, 2.0)
+                            val xList = listOf(
+                                0.2, 0.4, 0.6, 1.0, 1.5, 2.0, 3.0, 5.0,
+                                -0.2, -0.4, -0.6, -1.0, -1.5, -2.0, -3.0, -5.0
+                            )
                             xList.forEach { x ->
                                 val arcR = radius / abs(x).toFloat()
                                 val arcCy = cy - (radius / x).toFloat()
+                                val isMajor = abs(x) in xMajor || abs(x) == 1.0
                                 drawCircle(
-                                    color = chartGrid.copy(alpha = 0.4f),
+                                    color = if (isMajor) chartGrid.copy(alpha = 0.5f) else chartGrid.copy(alpha = 0.28f),
                                     radius = arcR,
                                     center = Offset(cx + radius, arcCy),
-                                    style = Stroke(width = 1f)
+                                    style = Stroke(width = if (isMajor) 1f else 0.7f)
                                 )
                             }
 
@@ -618,8 +632,8 @@ fun SmithChartScreen(
                 colors = CardDefaults.cardColors(containerColor = bgCard),
                 modifier = Modifier
                     .fillMaxWidth()
-                    .border(1.dp, borderCol, RoundedCornerShape(16.dp)),
-                shape = RoundedCornerShape(16.dp)
+                    .border(1.dp, borderCol, RoundedCornerShape(8.dp)),
+                shape = RoundedCornerShape(8.dp)
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
                     Text(
@@ -693,8 +707,8 @@ fun SmithChartScreen(
                 colors = CardDefaults.cardColors(containerColor = bgCard),
                 modifier = Modifier
                     .fillMaxWidth()
-                    .border(1.dp, borderCol, RoundedCornerShape(16.dp)),
-                shape = RoundedCornerShape(16.dp)
+                    .border(1.dp, borderCol, RoundedCornerShape(8.dp)),
+                shape = RoundedCornerShape(8.dp)
             ) {
                 Column(
                     modifier = Modifier.padding(16.dp),
@@ -788,8 +802,8 @@ fun SmithChartScreen(
                 colors = CardDefaults.cardColors(containerColor = bgCard),
                 modifier = Modifier
                     .fillMaxWidth()
-                    .border(1.dp, borderCol, RoundedCornerShape(16.dp)),
-                shape = RoundedCornerShape(16.dp)
+                    .border(1.dp, borderCol, RoundedCornerShape(8.dp)),
+                shape = RoundedCornerShape(8.dp)
             ) {
                 Column(
                     modifier = Modifier.padding(16.dp),
