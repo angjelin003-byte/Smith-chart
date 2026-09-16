@@ -4,6 +4,6 @@
   "version": "1.0.0",
   "scripts": {
     "build": "echo 'Android Kotlin project'",
-    "start": "node server.js"
+    "start": "java -cp \"app/build/tmp/kotlin-classes/debug:/opt/gradle/gradle-9.3.1/lib/kotlin-stdlib-2.2.21.jar\" com.smithchart.calculator.server.SmithChartServer"
   }
 }
