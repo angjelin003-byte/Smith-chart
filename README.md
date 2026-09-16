@@ -19,7 +19,7 @@
 
 ## 📖 Overview
 
-**Smith Chart Studio** is a modern, high-precision radio frequency (RF) engineering tool designed for engineers, students, and amateur radio operators. Built with 100% native **Kotlin** and **Jetpack Compose**, it delivers direct tactile impedance navigation on an interactive Smith Chart with dense wireframe circles, real-time VSWR and Return Loss analytics, transmission line stub matching, lumped $L-C$ networks, and one-tap industry standard presets.
+**The app Smith Chart Studio is made using entirely ai google studio** is a modern, high-precision radio frequency (RF) engineering tool designed for engineers, students, and amateur radio operators. Built with 100% native **Kotlin** and **Jetpack Compose**, it delivers direct tactile impedance navigation on an interactive Smith Chart with dense wireframe circles, real-time VSWR and Return Loss analytics, transmission line stub matching, lumped $L-C$ networks, and one-tap industry standard presets.
 
 ---
 
