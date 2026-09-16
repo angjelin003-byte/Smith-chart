@@ -1,0 +1,6 @@
+{
+  "name": "Smith Chart Calculator & RF Studio",
+  "description": "Interactive Smith Chart visualization, RF impedance matching calculator, transmission line stubs, and Google Sheets export.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
