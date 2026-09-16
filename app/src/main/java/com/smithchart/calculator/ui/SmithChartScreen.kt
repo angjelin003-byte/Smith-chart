@@ -20,9 +20,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.clipPath
+import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontFamily
@@ -228,8 +232,11 @@ fun SmithChartScreen(
     val textPrimary = if (isDarkTheme) Color(0xFFF8FAFC) else Color(0xFF0F172A)
     val textSecondary = if (isDarkTheme) Color(0xFF94A3B8) else Color(0xFF64748B)
     val borderCol = if (isDarkTheme) Color(0xFF334155) else Color(0xFFE2E8F0)
-    val chartBg = if (isDarkTheme) Color(0xFF090D16) else Color(0xFFFAFAFA)
-    val chartGrid = if (isDarkTheme) Color(0xFF1E293B) else Color(0xFFCBD5E1)
+    val chartBg = if (isDarkTheme) Color(0xFF080C14) else Color(0xFFF8FAFC)
+    val chartBorder = if (isDarkTheme) Color(0xFF64748B) else Color(0xFF334155)
+    val chartGridMajor = if (isDarkTheme) Color(0xFF94A3B8) else Color(0xFF475569)
+    val chartGridMinor = if (isDarkTheme) Color(0xFF475569) else Color(0xFF94A3B8)
+    val chartGridAxis = if (isDarkTheme) Color(0xFFE2E8F0) else Color(0xFF1E293B)
     val primaryCyan = if (isDarkTheme) Color(0xFF06B6D4) else Color(0xFF0284C7)
 
     Scaffold(
@@ -473,68 +480,134 @@ fun SmithChartScreen(
 
                             // Background Circle
                             drawCircle(color = chartBg, radius = radius, center = Offset(cx, cy))
-                            drawCircle(color = chartGrid, radius = radius, center = Offset(cx, cy), style = Stroke(width = 2.5f))
 
-                            // Dense Resistance Circles (r = 0.1, 0.2, 0.33, 0.5, 0.7, 1.0, 1.5, 2.0, 3.0, 4.0, 5.0, 10.0)
-                            val rMajor = setOf(0.2, 0.5, 1.0, 2.0, 5.0)
-                            val rList = listOf(0.1, 0.2, 0.33, 0.5, 0.7, 1.0, 1.5, 2.0, 3.0, 4.0, 5.0, 10.0)
-                            rList.forEach { r ->
-                                val circleR = radius / (1.0 + r).toFloat()
-                                val circleCx = cx + radius * (r / (1.0 + r)).toFloat()
-                                val isNormUnity = r == 1.0
-                                val isMajor = r in rMajor
-                                drawCircle(
-                                    color = when {
-                                        isNormUnity -> primaryCyan.copy(alpha = 0.6f)
-                                        isMajor -> chartGrid.copy(alpha = 0.75f)
-                                        else -> chartGrid.copy(alpha = 0.35f)
-                                    },
-                                    radius = circleR,
-                                    center = Offset(circleCx, cy),
-                                    style = Stroke(
-                                        width = if (isNormUnity) 1.8f else if (isMajor) 1.2f else 0.8f
+                            // Clip grid strictly inside the Smith Chart circular perimeter
+                            val chartPerimeterPath = Path().apply {
+                                addOval(Rect(cx - radius, cy - radius, cx + radius, cy + radius))
+                            }
+                            clipPath(chartPerimeterPath) {
+                                // Dense Resistance Circles (r = 0.1, 0.2, 0.33, 0.5, 0.7, 1.0, 1.5, 2.0, 3.0, 4.0, 5.0, 10.0)
+                                val rMajor = setOf(0.2, 0.5, 1.0, 2.0, 5.0)
+                                val rList = listOf(0.1, 0.2, 0.33, 0.5, 0.7, 1.0, 1.5, 2.0, 3.0, 4.0, 5.0, 10.0)
+                                rList.forEach { r ->
+                                    val circleR = radius / (1.0 + r).toFloat()
+                                    val circleCx = cx + radius * (r / (1.0 + r)).toFloat()
+                                    val isNormUnity = r == 1.0
+                                    val isMajor = r in rMajor
+                                    drawCircle(
+                                        color = when {
+                                            isNormUnity -> primaryCyan.copy(alpha = 0.95f)
+                                            isMajor -> chartGridMajor.copy(alpha = if (isDarkTheme) 0.88f else 0.80f)
+                                            else -> chartGridMinor.copy(alpha = if (isDarkTheme) 0.65f else 0.55f)
+                                        },
+                                        radius = circleR,
+                                        center = Offset(circleCx, cy),
+                                        style = Stroke(
+                                            width = if (isNormUnity) 2.2f else if (isMajor) 1.4f else 0.95f
+                                        )
                                     )
+                                }
+
+                                // Dense Reactance Arcs (x = +/- 0.2, 0.4, 0.6, 1.0, 1.5, 2.0, 3.0, 5.0)
+                                val xMajor = setOf(0.5, 1.0, 2.0)
+                                val xList = listOf(
+                                    0.2, 0.4, 0.6, 1.0, 1.5, 2.0, 3.0, 5.0,
+                                    -0.2, -0.4, -0.6, -1.0, -1.5, -2.0, -3.0, -5.0
                                 )
+                                xList.forEach { x ->
+                                    val arcR = radius / abs(x).toFloat()
+                                    val arcCy = cy - (radius / x).toFloat()
+                                    val isUnity = abs(x) == 1.0
+                                    val isMajor = abs(x) in xMajor
+                                    drawCircle(
+                                        color = when {
+                                            isUnity -> primaryCyan.copy(alpha = 0.85f)
+                                            isMajor -> chartGridMajor.copy(alpha = if (isDarkTheme) 0.82f else 0.72f)
+                                            else -> chartGridMinor.copy(alpha = if (isDarkTheme) 0.58f else 0.48f)
+                                        },
+                                        radius = arcR,
+                                        center = Offset(cx + radius, arcCy),
+                                        style = Stroke(
+                                            width = if (isUnity) 1.6f else if (isMajor) 1.25f else 0.9f
+                                        )
+                                    )
+                                }
                             }
 
-                            // Dense Reactance Arcs (x = +/- 0.2, 0.4, 0.6, 1.0, 1.5, 2.0, 3.0, 5.0)
-                            val xMajor = setOf(0.5, 1.0, 2.0)
-                            val xList = listOf(
-                                0.2, 0.4, 0.6, 1.0, 1.5, 2.0, 3.0, 5.0,
-                                -0.2, -0.4, -0.6, -1.0, -1.5, -2.0, -3.0, -5.0
+                            // Outer Perimeter Circle
+                            drawCircle(
+                                color = chartBorder,
+                                radius = radius,
+                                center = Offset(cx, cy),
+                                style = Stroke(width = 2.5f)
                             )
-                            xList.forEach { x ->
-                                val arcR = radius / abs(x).toFloat()
-                                val arcCy = cy - (radius / x).toFloat()
-                                val isMajor = abs(x) in xMajor || abs(x) == 1.0
-                                drawCircle(
-                                    color = if (isMajor) chartGrid.copy(alpha = 0.5f) else chartGrid.copy(alpha = 0.28f),
-                                    radius = arcR,
-                                    center = Offset(cx + radius, arcCy),
-                                    style = Stroke(width = if (isMajor) 1f else 0.7f)
-                                )
-                            }
 
                             // Real Axis Horizontal Line
                             drawLine(
-                                color = chartGrid,
+                                color = chartGridAxis,
                                 start = Offset(cx - radius, cy),
                                 end = Offset(cx + radius, cy),
-                                strokeWidth = 2f
+                                strokeWidth = 2.2f
                             )
+
+                            // Real Axis Calibration Ticks and Normalized Value Labels
+                            val tickPaint = android.graphics.Paint().apply {
+                                color = if (isDarkTheme) android.graphics.Color.argb(220, 203, 213, 225) else android.graphics.Color.argb(220, 51, 65, 85)
+                                textSize = 20f
+                                isAntiAlias = true
+                                textAlign = android.graphics.Paint.Align.CENTER
+                                typeface = android.graphics.Typeface.create(android.graphics.Typeface.MONOSPACE, android.graphics.Typeface.BOLD)
+                            }
+                            val unityPaint = android.graphics.Paint().apply {
+                                color = if (isDarkTheme) android.graphics.Color.rgb(6, 182, 212) else android.graphics.Color.rgb(2, 132, 199)
+                                textSize = 21f
+                                isAntiAlias = true
+                                textAlign = android.graphics.Paint.Align.CENTER
+                                typeface = android.graphics.Typeface.create(android.graphics.Typeface.MONOSPACE, android.graphics.Typeface.BOLD)
+                            }
+                            val regionPaint = android.graphics.Paint().apply {
+                                color = if (isDarkTheme) android.graphics.Color.argb(160, 148, 163, 184) else android.graphics.Color.argb(160, 100, 116, 139)
+                                textSize = 18f
+                                isAntiAlias = true
+                                textAlign = android.graphics.Paint.Align.LEFT
+                                typeface = android.graphics.Typeface.create(android.graphics.Typeface.SANS_SERIF, android.graphics.Typeface.NORMAL)
+                            }
+
+                            // Draw Ticks and numbers on real axis for r = 0.2, 0.5, 1.0, 2.0, 5.0
+                            val rTicks = listOf(0.2, 0.5, 1.0, 2.0, 5.0)
+                            rTicks.forEach { r ->
+                                val tickX = cx + radius * ((r - 1.0) / (r + 1.0)).toFloat()
+                                drawLine(
+                                    color = if (r == 1.0) primaryCyan else chartGridMajor,
+                                    start = Offset(tickX, cy - 4f),
+                                    end = Offset(tickX, cy + 4f),
+                                    strokeWidth = if (r == 1.0) 2.2f else 1.5f
+                                )
+                                val labelText = if (r == 1.0) "1.0" else r.toString()
+                                val paint = if (r == 1.0) unityPaint else tickPaint
+                                drawContext.canvas.nativeCanvas.drawText(labelText, tickX, cy + 16f, paint)
+                            }
+
+                            // Short and Open labels
+                            drawContext.canvas.nativeCanvas.drawText("0", cx - radius + 11f, cy - 6f, tickPaint)
+                            drawContext.canvas.nativeCanvas.drawText("∞", cx + radius - 11f, cy - 6f, tickPaint)
+
+                            // Reactance Region Indicators
+                            drawContext.canvas.nativeCanvas.drawText("+jX", cx - radius * 0.72f, cy - radius * 0.68f, regionPaint)
+                            drawContext.canvas.nativeCanvas.drawText("-jX", cx - radius * 0.72f, cy + radius * 0.74f, regionPaint)
 
                             // Center Crosshair (Matched 50 Ohm point)
                             drawLine(
                                 color = primaryCyan,
                                 start = Offset(cx - 8f, cy),
                                 end = Offset(cx + 8f, cy),
-                                strokeWidth = 2f
+                                strokeWidth = 2.2f
                             )
                             drawLine(
                                 color = primaryCyan,
                                 start = Offset(cx, cy - 8f),
                                 end = Offset(cx, cy + 8f),
-                                strokeWidth = 2f
+                                strokeWidth = 2.2f
                             )
 
                             // VSWR = 1.5 Target Circle
@@ -621,15 +694,20 @@ fun SmithChartScreen(
                         Spacer(modifier = Modifier.width(4.dp))
                         Text("Load ZL", fontSize = 11.sp, color = textSecondary)
 
-                        Spacer(modifier = Modifier.width(16.dp))
+                        Spacer(modifier = Modifier.width(14.dp))
                         Surface(color = Color(0xFF3B82F6), shape = CircleShape, modifier = Modifier.size(8.dp)) {}
                         Spacer(modifier = Modifier.width(4.dp))
                         Text("T-Line", fontSize = 11.sp, color = textSecondary)
 
-                        Spacer(modifier = Modifier.width(16.dp))
+                        Spacer(modifier = Modifier.width(14.dp))
                         Surface(color = Color(0xFF10B981), shape = CircleShape, modifier = Modifier.size(8.dp)) {}
                         Spacer(modifier = Modifier.width(4.dp))
                         Text("Matched Zin", fontSize = 11.sp, color = textSecondary)
+
+                        Spacer(modifier = Modifier.width(14.dp))
+                        Surface(color = primaryCyan, shape = CircleShape, modifier = Modifier.size(8.dp)) {}
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text("r=1 Circle", fontSize = 11.sp, color = textSecondary)
                     }
                 }
             }
