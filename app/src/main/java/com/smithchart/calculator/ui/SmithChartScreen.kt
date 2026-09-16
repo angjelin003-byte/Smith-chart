@@ -91,7 +91,7 @@ fun SmithChartScreen() {
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = Color(0xFF020617),
                     titleContentColor = Color.White,
-                    actionIconColor = Color.White
+                    actionIconContentColor = Color.White
                 )
             )
         },

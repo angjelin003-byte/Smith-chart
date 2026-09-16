@@ -1,0 +1,9 @@
+{
+  "name": "smith-chart-calculator",
+  "private": true,
+  "version": "1.0.0",
+  "scripts": {
+    "build": "echo 'Android Kotlin project'",
+    "start": "node server.js"
+  }
+}
