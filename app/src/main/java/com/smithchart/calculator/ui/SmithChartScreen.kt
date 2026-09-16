@@ -14,7 +14,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.font.FontFamily
@@ -36,45 +35,26 @@ fun SmithChartScreen() {
     var seriesC by remember { mutableStateOf(0.0) }   // pF
     var tLineLen by remember { mutableStateOf(0.0) }  // wavelengths
 
-    // Calculations
     val zNormR = loadR / z0
     val zNormI = loadI / z0
     
-    // Apply components step-by-step
     var curR = zNormR
     var curI = zNormI
 
     val omega = 2.0 * PI * frequency
 
-    // Series Inductor (X_L = omega * L)
     if (seriesL > 0.0) {
         val xL = omega * (seriesL * 1e-9) / z0
         curI += xL
     }
 
-    // Series Capacitor (X_C = -1 / (omega * C))
     if (seriesC > 0.0) {
         val xC = -1.0 / (omega * (seriesC * 1e-12)) / z0
         curI += xC
     }
 
-    // Transmission line (lossless ABCD / transformation)
-    if (tLineLen > 0.0) {
-        val betaL = 2.0 * PI * tLineLen
-        val zInR = curR
-        val zInI = curI
-        val denom = (1.0 - zInI * tan(betaL)).let { if (abs(it) < 1e-6) 1e-6 else it }
-        // Simplified lossless transmission line formula normalized
-        val zin = Complex(zInR, zInI)
-        // Gamma transform
-        val gammaR = (zin.r - 1.0) / (zin.r + 1.0 + zin.i * zin.i) // approximate
-        // Let's use exact reflection coefficient propagation: Gamma_in = Gamma_L * exp(-j 2 beta l)
-        val gammaL_r = (curR - 1.0) / (curR + 1.0 + curI * curI) // simplified
-    }
-
     val finalZ = Complex(curR, curI)
     
-    // Gamma calculation
     val denomGamma = (finalZ.r + 1.0) * (finalZ.r + 1.0) + finalZ.i * finalZ.i
     val gammaR = if (denomGamma == 0.0) 0.0 else ((finalZ.r - 1.0) * (finalZ.r + 1.0) + finalZ.i * finalZ.i) / denomGamma
     val gammaI = if (denomGamma == 0.0) 0.0 else (2.0 * finalZ.i) / denomGamma
@@ -125,7 +105,6 @@ fun SmithChartScreen() {
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // Smith Chart Canvas Card
             Card(
                 colors = CardDefaults.cardColors(containerColor = Color(0xFF020617)),
                 modifier = Modifier.fillMaxWidth()
@@ -153,9 +132,8 @@ fun SmithChartScreen() {
                                     val radius = 130f
                                     
                                     val dx = (offset.x - cx) / radius
-                                    val dy = (cy - offset.y) / radius // inverted y
+                                    val dy = (cy - offset.y) / radius
                                     
-                                    // Screen to Z conversion approx
                                     val denom = (1.0 - dx).let { if (abs(it) < 1e-3) 1e-3 else it }
                                     val rNew = (1.0 - dx * dx - dy * dy) / denom
                                     val xNew = (2.0 * dy) / denom
@@ -172,11 +150,9 @@ fun SmithChartScreen() {
                             val cy = size.height / 2f
                             val radius = 130.dp.toPx()
 
-                            // Outer boundary
                             drawCircle(color = Color(0xFF1E293B), radius = radius, center = Offset(cx, cy), style = Stroke(width = 4f))
                             drawCircle(color = Color(0xFF090D16), radius = radius, center = Offset(cx, cy))
 
-                            // R circles
                             val rList = listOf(0.2, 0.5, 1.0, 2.0, 5.0)
                             rList.forEach { r ->
                                 val circleR = radius / (1.0 + r).toFloat()
@@ -189,7 +165,6 @@ fun SmithChartScreen() {
                                 )
                             }
 
-                            // Center line
                             drawLine(
                                 color = Color(0xFF475569),
                                 start = Offset(cx - radius, cy),
@@ -197,7 +172,6 @@ fun SmithChartScreen() {
                                 strokeWidth = 2f
                             )
 
-                            // Load Point mapping
                             val den = (finalZ.r + 1.0)
                             val gx = if (den == 0.0) 0.0 else (finalZ.r * finalZ.r + finalZ.i * finalZ.i - 1.0) / ((finalZ.r + 1.0) * (finalZ.r + 1.0) + finalZ.i * finalZ.i)
                             val gy = if (den == 0.0) 0.0 else (2.0 * finalZ.i) / ((finalZ.r + 1.0) * (finalZ.r + 1.0) + finalZ.i * finalZ.i)
@@ -205,7 +179,6 @@ fun SmithChartScreen() {
                             val px = cx + (gx * radius).toFloat()
                             val py = cy - (gy * radius).toFloat()
 
-                            // Draw Load Marker
                             drawCircle(
                                 color = Color(0xFF06B6D4),
                                 radius = 8f,
@@ -221,7 +194,6 @@ fun SmithChartScreen() {
                 }
             }
 
-            // Calculations Summary Card
             Card(
                 colors = CardDefaults.cardColors(containerColor = Color(0xFF020617)),
                 modifier = Modifier.fillMaxWidth()
@@ -237,7 +209,6 @@ fun SmithChartScreen() {
                 }
             }
 
-            // Sliders Control Card
             Card(
                 colors = CardDefaults.cardColors(containerColor = Color(0xFF020617)),
                 modifier = Modifier.fillMaxWidth()

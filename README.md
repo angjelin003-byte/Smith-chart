@@ -1,6 +1,6 @@
 # Smith Chart Calculator - Android App (Kotlin & Jetpack Compose)
 
-This directory (`/android`) contains a complete, production-ready **Android application** written in **Kotlin** using **Jetpack Compose** for real-time RF Smith Chart impedance matching and calculations.
+This repository contains a 100% pure **Android application** written in **Kotlin** using **Jetpack Compose** for real-time RF Smith Chart impedance matching and calculations.
 
 ## Features
 - **Interactive Smith Chart Canvas**: Custom Compose Canvas drawing constant resistance circles, reactance arcs, and interactive load impedance point mapping.
@@ -10,26 +10,17 @@ This directory (`/android`) contains a complete, production-ready **Android appl
 
 ---
 
-## How to Build the APK
+## How to Build the APK (Cloud & Mobile Web Friendly)
 
-### Prerequisites
-- [Android Studio Hedgehog / Iguana or newer](https://developer.android.com/studio)
-- JDK 17 or higher
-- Android SDK (API level 34)
+Since this repository is fully configured for automated GitHub Actions builds, you can generate your APK directly from your mobile browser without installing a terminal or local SDK:
 
-### Building via Android Studio
+1. Push this repository to GitHub.
+2. Go to the **Actions** tab in your GitHub repository.
+3. Select the **Build Android APK** workflow and click **Run workflow**.
+4. Once the build completes successfully, download the `app-debug-apk` artifact directly to your phone and install the APK!
+
+### Local Development (Android Studio)
 1. Open Android Studio.
-2. Select **Open** and choose the `/android` folder within this repository.
+2. Select **Open** and choose this repository root folder.
 3. Wait for Gradle sync to complete.
-4. Click **Run** (`Shift + F10`) to launch the app on an emulator or connected Android device.
-
-### Building via Command Line (Gradle)
-To generate the debug APK directly from your terminal:
-
-```bash
-cd android
-./gradlew assembleDebug
-```
-
-The resulting APK will be available at:
-`android/app/build/outputs/apk/debug/app-debug.apk`
+4. Click **Run** (`Shift + F10`) to launch the app.
