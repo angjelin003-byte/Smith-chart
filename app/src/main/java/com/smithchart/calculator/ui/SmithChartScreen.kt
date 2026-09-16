@@ -370,81 +370,88 @@ fun SmithChartScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .verticalScroll(scrollState)
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // Smith Chart Display Card
-            Card(
-                colors = CardDefaults.cardColors(containerColor = bgCard),
+            // Static Smith Chart Display Card (Stays fixed when scrolling the page)
+            Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .border(1.dp, borderCol, RoundedCornerShape(16.dp)),
-                shape = RoundedCornerShape(16.dp)
+                    .padding(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 6.dp)
             ) {
-                Column(
-                    modifier = Modifier.padding(16.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
+                Card(
+                    colors = CardDefaults.cardColors(containerColor = bgCard),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .border(1.dp, borderCol, RoundedCornerShape(16.dp)),
+                    shape = RoundedCornerShape(16.dp)
                 ) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
+                    Column(
+                        modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        Text(
-                            "Smith Chart Complex Impedance Plane",
-                            fontSize = 13.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = textSecondary
-                        )
-                        Surface(
-                            color = if (vswr <= 1.5) Color(0xFF10B981).copy(alpha = 0.2f) else if (vswr <= 2.0) Color(0xFFF59E0B).copy(alpha = 0.2f) else Color(0xFFEF4444).copy(alpha = 0.2f),
-                            shape = RoundedCornerShape(12.dp)
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
                             Text(
-                                text = if (vswr <= 1.2) "Perfect Match" else if (vswr <= 1.5) "Good Match" else if (vswr <= 2.0) "Acceptable" else "Mismatched",
-                                color = if (vswr <= 1.5) Color(0xFF10B981) else if (vswr <= 2.0) Color(0xFFF59E0B) else Color(0xFFEF4444),
-                                fontSize = 11.sp,
-                                fontWeight = FontWeight.Bold,
-                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+                                "Smith Chart Complex Impedance Plane",
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = textSecondary
                             )
+                            Surface(
+                                color = if (vswr <= 1.5) Color(0xFF10B981).copy(alpha = 0.2f) else if (vswr <= 2.0) Color(0xFFF59E0B).copy(alpha = 0.2f) else Color(0xFFEF4444).copy(alpha = 0.2f),
+                                shape = RoundedCornerShape(12.dp)
+                            ) {
+                                Text(
+                                    text = if (vswr <= 1.2) "Perfect Match" else if (vswr <= 1.5) "Good Match" else if (vswr <= 2.0) "Acceptable" else "Mismatched",
+                                    color = if (vswr <= 1.5) Color(0xFF10B981) else if (vswr <= 2.0) Color(0xFFF59E0B) else Color(0xFFEF4444),
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+                                )
+                            }
                         }
-                    }
 
-                    Spacer(modifier = Modifier.height(10.dp))
+                        Spacer(modifier = Modifier.height(6.dp))
 
-                    // Smith Chart Interactive Canvas
-                    Box(
-                        modifier = Modifier
-                            .size(310.dp)
-                            .clip(CircleShape)
-                            .pointerInput(z0, maxRangeR, maxRangeX) {
-                                detectTapGestures { offset ->
-                                    val size = 310.dp.toPx()
-                                    val cx = size / 2f
-                                    val cy = size / 2f
-                                    val radius = 135f
+                        // Enlarged Smith Chart Interactive Canvas
+                        BoxWithConstraints(
+                            modifier = Modifier.fillMaxWidth(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            val chartDim = if (maxWidth < 335.dp) maxWidth else 335.dp
+                            Box(
+                                modifier = Modifier
+                                    .size(chartDim)
+                                    .clip(CircleShape)
+                                    .pointerInput(z0, maxRangeR, maxRangeX) {
+                                        detectTapGestures { offset ->
+                                            val sizePx = size.width.toFloat()
+                                            val cx = sizePx / 2f
+                                            val cy = sizePx / 2f
+                                            val radius = sizePx / 2f - 8f
 
-                                    val dx = (offset.x - cx) / radius
-                                    val dy = (cy - offset.y) / radius
+                                            val dx = (offset.x - cx) / radius
+                                            val dy = (cy - offset.y) / radius
 
-                                    val gammaSq = dx * dx + dy * dy
-                                    if (gammaSq <= 1.0) {
-                                        val denom = (1.0 - dx) * (1.0 - dx) + dy * dy
-                                        if (denom > 1e-4) {
-                                            val rNorm = (1.0 - gammaSq) / denom
-                                            val xNorm = (2.0 * dy) / denom
-                                            loadR = (rNorm * z0).coerceIn(0.1, maxRangeR)
-                                            loadX = (xNorm * z0).coerceIn(-maxRangeX, maxRangeX)
+                                            val gammaSq = dx * dx + dy * dy
+                                            if (gammaSq <= 1.0) {
+                                                val denom = (1.0 - dx) * (1.0 - dx) + dy * dy
+                                                if (denom > 1e-4) {
+                                                    val rNorm = (1.0 - gammaSq) / denom
+                                                    val xNorm = (2.0 * dy) / denom
+                                                    loadR = (rNorm * z0).coerceIn(0.1, maxRangeR)
+                                                    loadX = (xNorm * z0).coerceIn(-maxRangeX, maxRangeX)
+                                                }
+                                            }
                                         }
                                     }
-                                }
-                            }
-                    ) {
-                        Canvas(modifier = Modifier.fillMaxSize()) {
-                            val cx = size.width / 2f
-                            val cy = size.height / 2f
-                            val radius = size.width / 2f - 16f
+                            ) {
+                                Canvas(modifier = Modifier.fillMaxSize()) {
+                                    val cx = size.width / 2f
+                                    val cy = size.height / 2f
+                                    val radius = size.width / 2f - 8f
 
                             // Background Circle
                             drawCircle(color = chartBg, radius = radius, center = Offset(cx, cy))
@@ -570,8 +577,9 @@ fun SmithChartScreen(
                             drawCircle(color = Color.White, radius = 5f, center = Offset(pxFinal, pyFinal))
                         }
                     }
+                }
 
-                    Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.height(6.dp))
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.Center,
@@ -593,7 +601,18 @@ fun SmithChartScreen(
                     }
                 }
             }
+        }
 
+        // Scrollable Content (slides underneath the static chart panel)
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(1f)
+                .verticalScroll(scrollState)
+                .padding(horizontal = 16.dp)
+                .padding(bottom = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
             // VSWR & RF Performance Metrics Card
             Card(
                 colors = CardDefaults.cardColors(containerColor = bgCard),
@@ -952,6 +971,7 @@ fun SmithChartScreen(
             }
         }
     }
+}
 
     // Direct Input Dialog for R & X
     if (showDirectInputDialog) {
